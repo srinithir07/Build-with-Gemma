@@ -45,11 +45,12 @@ export class CommunicationService {
   private static findWhatsappScript(): string {
     const cwd = process.cwd();
     const candidates = [
+      path.resolve(cwd, 'scripts', 'whatsapp.py'),
+      path.resolve(cwd, 'apps', 'web', 'scripts', 'whatsapp.py'),
       path.resolve(cwd, '..', 'FinCent_onborading', 'whatsapp.py'),
       path.resolve(cwd, 'FinCent_onborading', 'whatsapp.py'),
-      path.resolve(__dirname, '..', '..', '..', '..', 'FinCent_onborading', 'whatsapp.py'),
-      path.resolve(__dirname, '..', '..', '..', 'FinCent_onborading', 'whatsapp.py'),
-      'C:\\Users\\Asus\\Desktop\\BUILD_WITH_GEMMA\\FinCent_onborading\\whatsapp.py'
+      path.resolve(__dirname, '..', '..', '..', 'scripts', 'whatsapp.py'),
+      path.resolve(__dirname, '..', '..', '..', '..', 'FinCent_onborading', 'whatsapp.py')
     ];
 
     for (const p of candidates) {
@@ -61,7 +62,7 @@ export class CommunicationService {
         // ignore resolution error
       }
     }
-    return 'C:\\Users\\Asus\\Desktop\\BUILD_WITH_GEMMA\\FinCent_onborading\\whatsapp.py';
+    return path.resolve(cwd, 'scripts', 'whatsapp.py');
   }
 
   /**

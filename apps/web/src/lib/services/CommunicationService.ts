@@ -100,12 +100,21 @@ export class CommunicationService {
     return { connected: false, phone: null, qr: null };
   }
 
+  private static lastSpawnAttempt: number = 0;
+  private static spawnFailedCount: number = 0;
+
   /**
    * Launches the Python Neonize gateway process in the background with robust path resolution.
    */
   static ensureGatewayRunning() {
     if (this.pythonProcess) return;
 
+    const now = Date.now();
+    if (this.spawnFailedCount >= 3 && now - this.lastSpawnAttempt < 30000) {
+      return; // Cooldown for 30 seconds after multiple failed attempts
+    }
+
+    this.lastSpawnAttempt = now;
     const scriptPath = this.findWhatsappScript();
     console.log(`🚀 [CommunicationService] Launching Python WhatsApp Gateway daemon: ${scriptPath}`);
 
@@ -118,11 +127,15 @@ export class CommunicationService {
       this.pythonProcess.on('exit', (code) => {
         if (code !== 0 && code !== null) {
           console.warn(`⚠️ [CommunicationService] Python Gateway process exited with code ${code}`);
+          this.spawnFailedCount++;
+        } else {
+          this.spawnFailedCount = 0;
         }
         this.pythonProcess = null;
       });
     } catch (err) {
       console.error(`❌ [CommunicationService] Failed to launch Python script:`, err);
+      this.spawnFailedCount++;
     }
   }
 

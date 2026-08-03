@@ -3,11 +3,18 @@ import sys
 import time
 import json
 import threading
-import requests
+import urllib.request
+import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from neonize.client import NewClient
-from neonize.events import ConnectedEv, MessageEv, QREv
-from neonize.utils.jid import JID, build_jid
+
+try:
+    from neonize.client import NewClient
+    from neonize.events import ConnectedEv, MessageEv, QREv
+    from neonize.utils.jid import JID, build_jid
+    HAS_NEONIZE = True
+except ImportError:
+    HAS_NEONIZE = False
+    print("⚠️ [WhatsApp Gateway] Neonize module not found. Optional Python WhatsApp Gateway features disabled until 'pip install neonize' is run.")
 
 # Reconfigure stdout/stderr to use utf-8 to prevent encoding crashes on Windows terminal
 if hasattr(sys.stdout, "reconfigure"):
@@ -92,11 +99,13 @@ def setup_client_events(cl):
                 for host in ["127.0.0.1", "localhost"]:
                     target_url = f"http://{host}:{port}/api/whatsapp/receive"
                     try:
-                        res = requests.post(target_url, json=payload, timeout=10)
-                        if res.status_code == 200:
-                            print(f"⏩ [FORWARDED TO NEXT.JS] Status: {res.status_code} ({target_url})")
-                            forwarded = True
-                            break
+                        data_bytes = json.dumps(payload).encode('utf-8')
+                        req = urllib.request.Request(target_url, data=data_bytes, headers={'Content-Type': 'application/json'})
+                        with urllib.request.urlopen(req, timeout=10) as resp:
+                            if resp.status == 200:
+                                print(f"⏩ [FORWARDED TO NEXT.JS] Status: {resp.status} ({target_url})")
+                                forwarded = True
+                                break
                     except Exception as err:
                         last_err = err
                 if forwarded:
